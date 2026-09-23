@@ -1,0 +1,89 @@
+<!-- Created by Erion Nezha — © 2026 All rights reserved -->
+<!DOCTYPE html>
+<html lang="sq">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sentiment Analysis — Demo</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);min-height:100vh;color:#fff;display:flex;flex-direction:column;align-items:center;padding:24px}
+.card{background:#ffffff10;border:1px solid #ffffff22;border-radius:16px;padding:24px;max-width:560px;width:100%}
+h1{font-size:1.4rem;margin-bottom:4px}
+.sub{color:#9fb3c8;font-size:.85rem;margin-bottom:16px}
+.sim{background:#ffb30022;border:1px solid #ffb30066;color:#ffd75c;font-size:.78rem;border-radius:8px;padding:8px 12px;margin-bottom:16px}
+textarea{width:100%;min-height:110px;padding:12px;border-radius:10px;border:1px solid #ffffff33;background:#00000040;color:#fff;font-size:.95rem;resize:vertical;margin-bottom:12px}
+button{padding:12px 26px;border:none;border-radius:10px;background:#00d4ff;color:#04121a;font-weight:700;cursor:pointer;font-size:.95rem}
+button:hover{filter:brightness(1.1)}
+#res{margin-top:18px;display:none}
+.badge-big{font-size:1.6rem;font-weight:800;padding:14px;border-radius:12px;text-align:center;margin-bottom:12px}
+.pos{background:#00c85322;border:1px solid #00c853;color:#5cff8a}
+.neg{background:#ff174422;border:1px solid #ff1744;color:#ff8a8a}
+.neu{background:#9e9e9e22;border:1px solid #9e9e9e;color:#cfcfcf}
+.bars{display:flex;flex-direction:column;gap:8px;font-size:.82rem}
+.barrow{display:flex;align-items:center;gap:10px}
+.barrow .lbl{width:70px;color:#9fb3c8}
+.bartrack{flex:1;background:#00000040;border-radius:6px;height:14px;overflow:hidden}
+.barfill{height:100%;border-radius:6px;transition:width .4s}
+.words{margin-top:10px;font-size:.78rem;color:#9fb3c8;line-height:1.7}
+.words b{color:#ffd75c}
+footer{margin-top:20px;color:#5c6b7f;font-size:.8rem}
+footer strong{color:#9fb3c8}
+</style>
+</head>
+<body>
+<div class="card">
+<h1>💭 Sentiment Analysis</h1>
+<div class="sub">Analizë ndjenjash në kohë reale — shkruaj tekstin dhe analizoje</div>
+<div class="sim">⚠️ SIMULIM — demoja përdor një leksik të vogël të ngulitur në JS. Origjinali (<b>original/main.py</b>) përdor NLTK VADER me streamlit.</div>
+<textarea id="txt" placeholder="Shkruaj diçka këtu... p.sh. I love this product, it is amazing!" maxlength="600">I love this product, it is amazing and wonderful!</textarea><br>
+<button onclick="analyze()">🔍 Analizo</button>
+<div id="res">
+<div id="verdict" class="badge-big"></div>
+<div class="bars">
+<div class="barrow"><span class="lbl">Pozitiv</span><div class="bartrack"><div id="bpos" class="barfill" style="background:#00c853"></div></div><span id="vpos"></span></div>
+<div class="barrow"><span class="lbl">Neutral</span><div class="bartrack"><div id="bneu" class="barfill" style="background:#9e9e9e"></div></div><span id="vneu"></span></div>
+<div class="barrow"><span class="lbl">Negativ</span><div class="bartrack"><div id="bneg" class="barfill" style="background:#ff1744"></div></div><span id="vneg"></span></div>
+</div>
+<div class="words" id="words"></div>
+</div>
+</div>
+<footer>Krijuar nga <strong>Erion Nezha</strong> — © 2026</footer>
+<script>
+const POS={"love":3,"amazing":3,"wonderful":3,"great":3,"excellent":3,"fantastic":3,"awesome":3,"best":3,"perfect":3,"beautiful":2,"happy":3,"good":2,"nice":2,"like":2,"enjoy":2,"enjoyed":2,"brilliant":3,"superb":3,"outstanding":3,"fabulous":3,"incredible":2,"glad":2,"pleased":2,"satisfied":2,"delighted":3,"thrilled":3,"marvelous":3,"terrific":3,"phenomenal":3,"mire":2,"shume":1,"bukur":2,"dashuri":3,"lumtur":3};
+const NEG={"hate":3,"terrible":3,"awful":3,"horrible":3,"worst":3,"bad":2,"sad":2,"angry":2,"disgusting":3,"poor":2,"boring":2,"stupid":2,"ugly":2,"fail":2,"failed":2,"failure":2,"disappointing":3,"disappointed":2,"annoying":2,"useless":3,"waste":2,"pathetic":3,"dreadful":3,"atrocious":3,"nasty":2,"rude":2,"keq":2,"urrej":3,"tmerr":3,"pisl":2,"bored":1};
+function analyze(){
+  const t=document.getElementById('txt').value.toLowerCase();
+  const words=t.replace(/[^a-zëç\s]/g,' ').split(/\s+/).filter(w=>w);
+  let ps=0,ns=0;const found=[];
+  words.forEach(x=>{
+    if(POS[x]!==undefined){ps+=POS[x];found.push(['+'+x,'pos']);}
+    else if(NEG[x]!==undefined){ns+=NEG[x];found.push(['-'+x,'neg']);}
+  });
+  const tot=ps+ns;
+  let pos=0,neg=0,neu=1;
+  if(tot>0){pos=ps/tot;neg=ns/tot;neu=Math.max(0,1-pos-neg)*0.15;const s=pos+neg+neu;pos/=s;neg/=s;neu/=s;}
+  const compound=tot>0?(ps-ns)/Math.sqrt((ps+ns)*(ps+ns)+15):0;
+  let verdict,cls;
+  if(tot===0||Math.abs(compound)<0.15){verdict='😐 NEUTRAL';cls='neu';}
+  else if(compound>0){verdict='😊 POZITIV';cls='pos';}
+  else{verdict='😞 NEGATIV';cls='neg';}
+  const r=document.getElementById('res');r.style.display='block';
+  const v=document.getElementById('verdict');v.className='badge-big '+cls;
+  v.textContent=verdict+'  ('+(compound>=0?'+':'')+compound.toFixed(2)+')';
+  const pct=x=>Math.round(x*100)+'%';
+  document.getElementById('bpos').style.width=pct(pos);
+  document.getElementById('bneg').style.width=pct(neg);
+  document.getElementById('bneu').style.width=pct(neu);
+  document.getElementById('vpos').textContent=pct(pos);
+  document.getElementById('vneg').textContent=pct(neg);
+  document.getElementById('vneu').textContent=pct(neu);
+  document.getElementById('words').innerHTML=found.length?
+    'Fjalë të kapura: '+found.map(f=>'<b style="color:'+(f[1]==='pos'?'#5cff8a':'#ff8a8a')+'">'+f[0]+'</b>').join(' '):
+    'Asnjë fjalë sentimentale nuk u gjet në leksik.';
+}
+document.getElementById('txt').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.ctrlKey)analyze();});
+analyze();
+</script>
+</body>
+</html>
